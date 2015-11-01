@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style media="screen"> body{ background-color: black; } </style>
+  	<script src="https://jspm.io/system@0.18.js"></script>
+    <script type="text/javascript">
+      System.config({
+        transpiler: 'babel',
+        packages: {
+          './': {
+            defaultExtension: false
+          }
+        },
+        map: {
+          'winjs': 'npm:winjs',
+          'react': 'npm:react@0.14',
+          'react-winjs': 'github:staxmanade/react-winjs@2.4.0-react-0.14',
+        }
+      });
+
+      System.import('./app.jsx');
+
+    </script>
+  </head>
+  <body>
+    <div id="main"></div>
+  </body>
+</html>
