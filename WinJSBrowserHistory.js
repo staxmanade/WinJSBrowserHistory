@@ -36,7 +36,15 @@ export default class WinJSBrowserHistory {
     }
 
     initFirstNavigation() {
-      WinJS.Navigation.navigate(location.hash, location.state);
+      WinJS.Navigation.navigate(this.getHashLessUrl(), location.state);
+    }
+
+    getHashLessUrl() {
+      var hash = location.hash || '';
+      if(hash[0] === "#") {
+          hash = hash.slice(1)
+      }
+      return hash;
     }
 
     handlePopState(eventObject) {
@@ -44,14 +52,10 @@ export default class WinJSBrowserHistory {
         if(!this._isNavigationBeingHandled && !this._isWinJSNavigationBackBeingHandled) {
             this._isNavigationTriggeredByPopStateEvent = true;
 
-            var hash = location.hash || '';
-            if(hash[0] === "#") {
-                hash = hash.slice(1)
-            }
 
             this._isPopStateTriggeredEvent = true;
 
-            WinJS.Navigation.navigate(hash, location.state);
+            WinJS.Navigation.navigate(this.getHashLessUrl(), location.state);
         }
         this._isWinJSNavigationBackBeingHandled = false;
     }
