@@ -11,7 +11,7 @@ export default class App extends React.Component {
     constructor(props) {
         super(props);
 
-        this.winJSBrowserHistory = new WinJSBrowserHistory(this.onApplyNavigaitonChange.bind(this));
+        this.winJSBrowserHistory = new WinJSBrowserHistory(this.onApplyNavigaitonChange.bind(this), this.onNavigationError.bind(this));
 
         this.state = {
             nav: {
@@ -27,6 +27,12 @@ export default class App extends React.Component {
     }
 
     onApplyNavigaitonChange(location, state) {
+
+        if(location === "/causeError") {
+          throw new Error("test navigation error");
+        }
+
+        console.log("app.jsx: onApplyNavigaitonChange(location, state)", location, state);
         this.setState({
             nav: {
                 location: location,
@@ -35,12 +41,21 @@ export default class App extends React.Component {
         });
     }
 
+    onNavigationError(err) {
+      console.error("app.jsx: onNavigationError: ", err);
+      alert(err);
+    }
+
     gotoPage1Nested() {
         WinJS.Navigation.navigate("/page1/nested");
     }
 
     gotoPage1() {
         WinJS.Navigation.navigate("/page1");
+    }
+
+    gotoNagivationErrorTest() {
+        WinJS.Navigation.navigate("/causeError");
     }
 
     render() {
@@ -64,6 +79,8 @@ export default class App extends React.Component {
             case "/page1":
                 page = componentWithBackButton(<div>
                     Page 1 - <button type="button" onClick={this.gotoPage1Nested.bind(this)}>Goto Page 2 (nested)</button>
+
+                  <button type="button" onClick={this.gotoNagivationErrorTest.bind(this)}>Sample error on navigation</button>
                 </div>);
             break;
 

@@ -6,9 +6,11 @@ var debugLog = (...args) => {
 
 export default class WinJSBrowserHistory {
 
-    constructor(onApplyNavigaitonChange) {
+    constructor(onApplyNavigaitonChange, onNavigationError) {
 
         this.debug = true;
+
+        this._lastNavigationPromise = WinJS.Promise.as();
 
         if(typeof onApplyNavigaitonChange !== "function") {
             throw new Error("Expecting first argumet to be a function that can take 2 parametes (location: string, state: any) => {}");
@@ -19,6 +21,7 @@ export default class WinJSBrowserHistory {
         this._isNavigationTriggeredByPopStateEvent = false;
 
         this.onApplyNavigaitonChange = onApplyNavigaitonChange;
+        this.onNavigationError = onNavigationError;
 
         WinJS.Navigation.addEventListener("beforenavigate", this.handleBeforeNavigate.bind(this));
         WinJS.Navigation.addEventListener("navigating", this.handleNavigating.bind(this));
@@ -69,23 +72,46 @@ export default class WinJSBrowserHistory {
         this.debug && debugLog("handleNavigating:", eventObject);
         this.debug && debugLog("handleNavigating delta:", eventObject.detail.delta);
 
+        this._lastNavigationPromise.cancel();
+
         var location = eventObject.detail.location;
         var state = eventObject.detail.state;
         var delta = eventObject.detail.delta;
 
-        this.onApplyNavigaitonChange(location, state);
-
-        if(!this._isNavigationTriggeredByPopStateEvent) {
-            if(delta < 0) {
-                this.debug && debugLog("handleNavigating delta < 0 - going back");
-
-                this._isWinJSNavigationBackBeingHandled = true;
-                window.history.go(delta);
-            } else {
-                this.debug && debugLog("handleNavigating history.pushState()", "#" + location);
-                window.history.pushState(state, "", "#" + location);
+        var applyNavigation = () => {
+          return new WinJS.Promise((resolve, reject) => {
+            try {
+              return resolve(this.onApplyNavigaitonChange(location, state));
+            } catch (err) {
+              this.debug && console.error("WinJSBrowserHistory Navigation error:", err);
+              return reject(err);
             }
+          });
         }
+
+        this._lastNavigationPromise = WinJS.Promise.as(applyNavigation()).then(() => {
+
+              if(!this._isNavigationTriggeredByPopStateEvent) {
+                  if(delta < 0) {
+                      this.debug && debugLog("handleNavigating delta < 0 - going back");
+
+                      this._isWinJSNavigationBackBeingHandled = true;
+                      window.history.go(delta);
+                  } else {
+                      this.debug && debugLog("handleNavigating history.pushState()", "#" + location);
+                      window.history.pushState(state, "", "#" + location);
+                  }
+              }
+
+        }, (err) => {
+            if(this.onNavigationError && typeof this.onNavigationError === "function") {
+                this.onNavigationError(err);
+            } else {
+                console.error("WinJSBrowserHistory Navigation error:", err);
+            }
+        });
+        eventObject.detail.setPromise(this._lastNavigationPromise);
+
     }
 
     handleNavigated(eventObject) {
