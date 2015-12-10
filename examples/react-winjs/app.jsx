@@ -16,8 +16,9 @@ export default class App extends React.Component {
         this.state = {
             nav: {
                 state: WinJS.Navigation.state,
-                location: WinJS.Navigation.location
-            }
+                location: WinJS.Navigation.location,
+            },
+            replaceHistoryStateValue: 0
         }
     }
 
@@ -58,6 +59,19 @@ export default class App extends React.Component {
         WinJS.Navigation.navigate("/causeError");
     }
 
+    replaceHistoryState() {
+
+        this.setState({
+            replaceHistoryStateValue: ++this.state.replaceHistoryStateValue
+        }, () => {
+            window.history.replaceState(null, "replace state title", "#/replaceHistoryTest/" + this.state.replaceHistoryStateValue);
+        });
+    }
+
+    gotoReplaceHistoryTest() {
+      WinJS.Navigation.navigate("/replaceHistoryTest");
+    }
+
     render() {
 
         console.log("render() location:", this.state.nav.location);
@@ -76,6 +90,13 @@ export default class App extends React.Component {
         var page;
 
         switch(this.state.nav.location) {
+
+            case "/replaceHistoryTest":
+                page = componentWithBackButton(<div>
+                    window.history.replaceState test - <button type="button" onClick={this.replaceHistoryState.bind(this)}>Increment replace-state {this.state.replaceHistoryStateValue}</button>
+                </div>);
+            break;
+
             case "/page1":
                 page = componentWithBackButton(<div>
                     Page 1 - <button type="button" onClick={this.gotoPage1Nested.bind(this)}>Goto Page 2 (nested)</button>
@@ -90,7 +111,9 @@ export default class App extends React.Component {
 
             default:
                 page = (<div>
-                    <button type="button" onClick={this.gotoPage1.bind(this)}>Goto Page 1</button>
+                  <button type="button" onClick={this.gotoPage1.bind(this)}>Goto Page 1</button>
+
+                  <button type="button" onClick={this.gotoReplaceHistoryTest.bind(this)}>Replace History Test</button>
                 </div>);
         }
 
